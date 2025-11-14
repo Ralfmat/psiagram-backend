@@ -14,7 +14,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ['id', 'user', 'bio', 'avatar', 'follows_count', 'followed_by_count']
+        fields = ['id', 'user', 'bio', 'avatar', 'followers_count', 'following_count']
         extra_kwargs = {
             # Field 'follows' is read-only because
             # because we will manage it through a separate endpoint (e.g., /profiles/1/follow/)
