@@ -3,5 +3,6 @@ from django.db import models
 
 class User(AbstractUser):
     """
-    Custom user model extending AbstractUser."""
+    Custom user model extending AbstractUser.
+    """
     pass
