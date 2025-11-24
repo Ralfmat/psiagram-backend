@@ -1,5 +1,6 @@
 from pathlib import Path
 from decouple import config
+from datetime import timedelta
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -27,9 +28,24 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Architecture Apps
+    'django.contrib.sites', # Required by allauth
+    
+    # Third Party
     'rest_framework',
+    'rest_framework.authtoken', # Required by dj-rest-auth
     'rest_framework_simplejwt',
     'corsheaders',
+    
+    # Auth & Social
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    # Local Apps
     'aws_rekognition',
     'users',
     'pets',
@@ -38,6 +54,31 @@ INSTALLED_APPS = [
     'events',
     'groups',
 ]
+
+# allauth required setting
+SITE_ID = 1
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
+
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_COOKIE': 'psiagram-auth',
+    'JWT_AUTH_REFRESH_COOKIE': 'psiagram-refresh-token',
+}
+
+ACCOUNT_SIGNUP_FIELDS = ['first_name', 'last_name', 'email*', 'password1*', 'password2*']
+
+ACCOUNT_EMAIL_VERIFICATION = 'optional' # User must verify email
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -48,6 +89,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'psiagram.urls'
@@ -68,12 +110,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'psiagram.wsgi.application'
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
-}
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -103,9 +139,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
-AUTH_USER_MODEL = 'users.User'
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -137,5 +170,7 @@ AWS_S3_BUCKET_NAME = config('AWS_S3_BUCKET')
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    'http://localhost:8081',
+
 ]
 
