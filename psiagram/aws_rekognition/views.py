@@ -5,25 +5,28 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-s3_client = boto3.client(
-    's3',
-    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-    region_name=settings.AWS_REGION_NAME
-)
 
-rekognition_client = boto3.client(
-    'rekognition',
-    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-    region_name=settings.AWS_REGION_NAME
-)
+# Funkcje, bo lepiej wywoływać klienta w metodzie post niż zamiast przy imporcie pliku
+def get_s3_client():
+    return boto3.client(
+        's3',
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        region_name=settings.AWS_REGION_NAME,
+    )
+
+
+def get_rekognition_client():
+    return boto3.client(
+        'rekognition',
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        region_name=settings.AWS_REGION_NAME,
+    )
 
 class InitiateUploadView(APIView):
-    """
-    View to initiate an upload by generating a pre-signed S3 URL.
-    """
     def post(self, request):
+        s3_client = get_s3_client()
         try:
             # 1. Extract filename and content type from the request
             filename = request.data.get('filename')

@@ -1,7 +1,7 @@
 from pathlib import Path
 from decouple import config
 import os
-import dj_database_url
+# import dj_database_url
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -13,9 +13,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-twoj-lokalny-klucz')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = [*]
+# Odpalam debuga pozdro
+DEBUG = True
+
+
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -113,18 +116,18 @@ WSGI_APPLICATION = 'psiagram.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
 DATABASES = {
-    'default': dj_database_url.config(
-        default=f"postgres://{os.environ.get('DB_USER')}:{os.environ.get('DB_PASSWORD')}@{os.environ.get('DB_HOST')}:{os.environ.get('DB_PORT')}/{os.environ.get('DB_NAME')}",
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=f"postgres://{os.environ.get('DB_USER')}:{os.environ.get('DB_PASSWORD')}@{os.environ.get('DB_HOST')}:{os.environ.get('DB_PORT')}/{os.environ.get('DB_NAME')}",
+#         conn_max_age=600
+#     )
+# }
 
 
 # Password validation
@@ -167,10 +170,18 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
-AWS_REGION_NAME = config('AWS_REGION')
-AWS_S3_BUCKET_NAME = config('AWS_S3_BUCKET')
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default=None)
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default=None)
+AWS_REGION_NAME = config('AWS_REGION', default=None)
+AWS_S3_BUCKET_NAME = config('AWS_S3_BUCKET', default=None)
+
+# Bedzie można łatwo sprawdzić czy S3 jest włączone przez USE_S3
+USE_S3 = all([
+    AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY,
+    AWS_REGION_NAME,
+    AWS_S3_BUCKET_NAME
+])
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",

@@ -9,4 +9,6 @@ urlpatterns = [
     path('api/auth/registration/', include('dj_rest_auth.registration.urls')),
     path('api/v1/rekognition/', include('aws_rekognition.urls')),
     path('test/', testView.as_view(), name='test_view'),
+
+    path("users/", include("users.urls")),
 ]
