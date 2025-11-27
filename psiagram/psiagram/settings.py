@@ -8,10 +8,9 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'django-insecure-21qmrpvcks7gd*@*60-&bnloo5@xt_t#xklv8@3(za#dhgub*j'
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-twoj-lokalny-klucz')
 # SECURITY WARNING: don't run with debug turned on in production!
 
 # Odpalam debuga pozdro
@@ -165,11 +164,14 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+STATIC_ROOT = '/tmp/static'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Nie wiem jeszcze do czego needed ale przy defaultach None nic nie psują
 AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default=None)
 AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default=None)
 AWS_REGION_NAME = config('AWS_REGION', default=None)
