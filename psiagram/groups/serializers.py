@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from.models import Group, GroupJoinRequest
+from .models import Group, GroupJoinRequest
 from users.serializers import UserSerializer
 
 class GroupJoinRequestSerializer(serializers.ModelSerializer):

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from.models import Post, Comment, Like
+from .models import Post, Comment, Like
 from pets.serializers import PetProfileSerializer
 from users.serializers import UserSerializer
 
@@ -71,3 +71,22 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_likes_count(self, obj):
         return obj.likes.count()
+
+class PostFeedSerializer(serializers.ModelSerializer):
+    author = serializers.PrimaryKeyRelatedField(read_only=True)
+    author_username = serializers.CharField(source='author.username',read_only=True)
+    likes_count = serializers.IntegerField(source='likes.count', read_only=True)
+    comments_count = serializers.IntegerField(source='comments.count', read_only=True)
+
+    class Meta:
+        model = Post
+        fields = [
+            "id",
+            "author",
+            "author_username",
+            "image",
+            "caption",
+            "created_at",
+            "likes_count",
+            "comments_count",
+        ]

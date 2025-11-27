@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from.models import Event, EventAttendance
+from .models import Event, EventAttendance
 from users.serializers import UserSerializer
 from pets.serializers import PetProfileSerializer
 
