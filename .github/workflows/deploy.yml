@@ -10,6 +10,8 @@ env:
 
   PROJECT_DIR: "psiagram"
 
+  STATIC_ROOT: /tmp/static
+
 on:
   push:
     branches:
@@ -41,6 +43,8 @@ jobs:
           mkdir -p .ebextensions
 
       - name: Create zip deployment package
+        mkdir -p static
+        mv /tmp/static/* static/
         run: zip -r ${{ env.DEPLOY_PACKAGE_NAME }} psiagram/ .ebextensions/ .platform/ Procfile -x \*.git\*
 
       - name: Configure AWS credentials
