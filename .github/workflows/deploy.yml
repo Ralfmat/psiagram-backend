@@ -8,7 +8,7 @@ env:
   VERSION_NAME: ${{ github.sha }}
   AWS_REGION_NAME: "eu-central-1"
 
-PROJECT_DIR: "psiagram"
+  PROJECT_DIR: "psiagram"
 
 on:
   push:
