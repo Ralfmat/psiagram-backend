@@ -1,0 +1,1 @@
+web: cd psiagram && gunicorn psiagram.wsgi:application --bind :8000 --workers 3 --threads 2
