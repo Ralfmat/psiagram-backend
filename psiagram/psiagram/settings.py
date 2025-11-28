@@ -1,8 +1,13 @@
 from pathlib import Path
 from decouple import config
 import os
+from dotenv import load_dotenv
+
 # import dj_database_url
 
+# Load environment variables from a .env file if present
+load_dotenv(override=True)
+print("Loaded AWS KEY: ", os.getenv("AWS_ACCESS_KEY_ID"))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -171,11 +176,10 @@ STATIC_ROOT = '/tmp/static'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Nie wiem jeszcze do czego needed ale przy defaultach None nic nie psują
-AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default=None)
-AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default=None)
-AWS_REGION_NAME = config('AWS_REGION', default=None)
-AWS_S3_BUCKET_NAME = config('AWS_S3_BUCKET', default=None)
+AWS_S3_BUCKET_NAME = os.environ.get("AWS_S3_BUCKET_NAME")
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+AWS_REGION_NAME = os.environ.get("AWS_REGION_NAME", os.environ.get("AWS_REGION", "eu-west-1"))
 
 # Bedzie można łatwo sprawdzić czy S3 jest włączone przez USE_S3
 USE_S3 = all([
