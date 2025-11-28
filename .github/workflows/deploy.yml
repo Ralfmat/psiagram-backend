@@ -3,7 +3,7 @@ env:
   DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
   EB_S3_BUCKET_NAME: "django-deployment-psiagram"
   EB_APPLICATION_NAME: "psiagram-backend"
-  EB_ENVIRONMENT_NAME: "psiagram-backend-env"
+  EB_ENVIRONMENT_NAME: "psiagram-backend-env-1"
   DEPLOY_PACKAGE_NAME: "psiagram-backend-${{ github.sha }}.zip"
   VERSION_NAME: ${{ github.sha }}
   AWS_REGION_NAME: "eu-central-1"
