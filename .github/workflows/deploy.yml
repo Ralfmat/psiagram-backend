@@ -46,7 +46,7 @@ jobs:
         run: |
           mkdir -p static
           mv /tmp/static/* static/
-          zip -r ${{ env.DEPLOY_PACKAGE_NAME }} psiagram/ static/ .ebextensions/ .platform/ Procfile -x \*.git\*
+          zip -r ${{ env.DEPLOY_PACKAGE_NAME }} requirements.txt psiagram/ static/ .ebextensions/ .platform/ Procfile -x \*.git\*
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
