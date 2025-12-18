@@ -3,7 +3,7 @@ from decouple import config
 import os
 from dotenv import load_dotenv
 
-# import dj_database_url
+import dj_database_url
 
 # Load environment variables from a .env file if present
 load_dotenv(override=True)
@@ -124,18 +124,30 @@ WSGI_APPLICATION = 'psiagram.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Domyślnie SQLite (dla pracy lokalnej, jeśli nie podano danych do bazy)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-# DATABASES = {
-#     'default': dj_database_url.config(
-#         default=f"postgres://{os.environ.get('DB_USER')}:{os.environ.get('DB_PASSWORD')}@{os.environ.get('DB_HOST')}:{os.environ.get('DB_PORT')}/{os.environ.get('DB_NAME')}",
-#         conn_max_age=600
-#     )
-# }
+
+# Nadpisanie konfiguracji, jeśli dostępne są zmienne środowiskowe bazy danych (czyli na AWS)
+db_from_env = dj_database_url.config(
+    default=None, # Nie używaj defaultu, jeśli brak zmiennej DATABASE_URL
+    conn_max_age=600
+)
+
+# Jeśli dj_database_url coś znalazł (np. przez DATABASE_URL) LUB mamy ustawione zmienne ręcznie:
+if os.environ.get('DB_HOST'):
+    DATABASES = {
+        'default': dj_database_url.parse(
+            f"postgres://{os.environ.get('DB_USER')}:{os.environ.get('DB_PASSWORD')}@{os.environ.get('DB_HOST')}:{os.environ.get('DB_PORT')}/{os.environ.get('DB_NAME')}",
+            conn_max_age=600
+        )
+    }
+elif db_from_env:
+    DATABASES['default'].update(db_from_env)
 
 
 # Password validation
