@@ -76,7 +76,11 @@ REST_AUTH = {
 
 ACCOUNT_SIGNUP_FIELDS = ['first_name', 'last_name', 'email*', 'password1*', 'password2*']
 
-ACCOUNT_EMAIL_VERIFICATION = 'optional' # User must verify email
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 AUTH_USER_MODEL = 'users.User'
