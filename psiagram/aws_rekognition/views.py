@@ -1,10 +1,12 @@
 import boto3
 import uuid
+import logging
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, permissions
 
+logger = logging.getLogger(__name__)
 
 # Funkcje, bo lepiej wywoływać klienta w metodzie post niż zamiast przy imporcie pliku
 def get_s3_client():
@@ -25,18 +27,26 @@ def get_rekognition_client():
     )
 
 class InitiateUploadView(APIView):
+    """
+    View to initiate an upload by generating a pre-signed S3 URL.
+    """
+    permission_classes = [permissions.IsAuthenticated]
     def post(self, request):
         s3_client = get_s3_client()
         try:
             # 1. Extract filename and content type from the request
             filename = request.data.get('filename')
             content_type = request.data.get('content_type')
+            bucket = getattr(settings, "AWS_S3_BUCKET_NAME", None)
 
-            if not filename or not content_type:
-                return Response(
-                    {"error": "Filename and content_type are required."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            # walidacja
+            if not filename or not isinstance(filename, str):
+                return Response({"error": "Invalid or missing 'filename'."}, status=status.HTTP_400_BAD_REQUEST)
+            if not content_type or not isinstance(content_type, str):
+                return Response({"error": "Invalid or missing 'content_type'."}, status=status.HTTP_400_BAD_REQUEST)
+            if not bucket or not isinstance(bucket, str):
+                logger.error("Missing AWS_S3_BUCKET_NAME in settings")
+                return Response({"error": "Server misconfiguration: missing S3 bucket name."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             # 2. Generate a unique filename (S3 key)
             file_key = f"uploads/{uuid.uuid4()}_{filename}"
@@ -45,7 +55,7 @@ class InitiateUploadView(APIView):
             presigned_url = s3_client.generate_presigned_url(
                 ClientMethod='put_object',
                 Params={
-                    'Bucket': settings.AWS_S3_BUCKET_NAME,
+                    'Bucket': bucket,
                     'Key': file_key,
                     'ContentType': content_type
                     # 'ACL': 'public-read' #TODO decide on ACL, it may be needed for public access
@@ -66,6 +76,7 @@ class InitiateUploadView(APIView):
 
 
 class UploadCompleteView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
     """
     View to handle post-upload processing, such as Rekognition analysis.
     """
@@ -80,8 +91,12 @@ class UploadCompleteView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
+            # Initialize AWS clients
+            s3_client = get_s3_client()
+            rek_client = get_rekognition_client()
+            
             # 2. Call Rekognition to analyze the image
-            response = rekognition_client.detect_labels(
+            response = rek_client.detect_labels(
                 Image={
                     'S3Object': {
                         'Bucket': settings.AWS_S3_BUCKET_NAME,
