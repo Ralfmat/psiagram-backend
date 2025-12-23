@@ -115,10 +115,8 @@ WSGI_APPLICATION = 'psiagram.wsgi.application'
 # --- DATABASE CONFIGURATION (AWS RDS PRIMARY) ---
 
 # 1. Try to configure for AWS RDS PostgreSQL
-if os.environ.get('DB_HOST'):
-    print(f"Configuring database for AWS RDS: {os.environ.get('DB_HOST')}")
-    DATABASES = {
-        'default': {
+DATABASES = {
+    'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.environ.get('DB_NAME'),
             'USER': os.environ.get('DB_USER'),
@@ -126,17 +124,8 @@ if os.environ.get('DB_HOST'):
             'HOST': os.environ.get('DB_HOST'),
             'PORT': os.environ.get('DB_PORT', '5432'),
             'CONN_MAX_AGE': 600,
-        }
     }
-# 2. Fallback to local SQLite if no DB_HOST is present
-else:
-    print("No DB_HOST variable found. Using local SQLite3 database.")
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
