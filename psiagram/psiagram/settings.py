@@ -116,7 +116,7 @@ WSGI_APPLICATION = 'psiagram.wsgi.application'
 
 # 1. Try to configure for AWS RDS PostgreSQL
 if os.environ.get('DB_HOST'):
-    print(f"✅ Configuring database for AWS RDS: {os.environ.get('DB_HOST')}")
+    print(f"Configuring database for AWS RDS: {os.environ.get('DB_HOST')}")
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -130,7 +130,7 @@ if os.environ.get('DB_HOST'):
     }
 # 2. Fallback to local SQLite if no DB_HOST is present
 else:
-    print("⚠️  No DB_HOST variable found. Using local SQLite3 database.")
+    print("No DB_HOST variable found. Using local SQLite3 database.")
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
