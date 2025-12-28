@@ -1,3 +1,6 @@
+from django.utils import timezone
+import boto3
+from django.conf import settings
 from rest_framework import serializers
 from .models import Post, Comment, Like
 from pets.serializers import PetProfileSerializer
@@ -74,9 +77,11 @@ class PostSerializer(serializers.ModelSerializer):
 
 class PostFeedSerializer(serializers.ModelSerializer):
     author = serializers.PrimaryKeyRelatedField(read_only=True)
-    author_username = serializers.CharField(source='author.username',read_only=True)
+    author_username = serializers.CharField(source='author.username', read_only=True)
     likes_count = serializers.IntegerField(source='likes.count', read_only=True)
     comments_count = serializers.IntegerField(source='comments.count', read_only=True)
+
+    s3_key = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = Post
@@ -89,4 +94,49 @@ class PostFeedSerializer(serializers.ModelSerializer):
             "created_at",
             "likes_count",
             "comments_count",
+            "s3_key",
         ]
+        extra_kwargs = {
+            'image': {'required': False}
+        }
+
+    def validate(self, attrs):
+        if not attrs.get('image') and not attrs.get('s3_key'):
+            raise serializers.ValidationError("Must provide either an image file or an s3_key.")
+        return attrs
+
+    def create(self, validated_data):
+        s3_key = validated_data.pop('s3_key', None)
+
+        if s3_key:
+            # Logic to move the file from 'uploads/' to 'posts/' on S3
+            s3_client = boto3.client(
+                's3',
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                region_name=settings.AWS_REGION_NAME,
+            )
+            bucket_name = settings.AWS_S3_BUCKET_NAME
+
+            # 1. Define new path (mimicking upload_to='posts/%Y/%m/%d/')
+            filename = s3_key.split('/')[-1]
+            date_path = timezone.now().strftime('posts/%Y/%m/%d')
+            new_key = f"{date_path}/{filename}"
+
+            try:
+                # 2. Copy object
+                s3_client.copy_object(
+                    Bucket=bucket_name,
+                    CopySource={'Bucket': bucket_name, 'Key': s3_key},
+                    Key=new_key
+                )
+                # 3. Delete original from 'uploads/'
+                s3_client.delete_object(Bucket=bucket_name, Key=s3_key)
+
+                # 4. Set the image field to the new path
+                validated_data['image'] = new_key
+                
+            except Exception as e:
+                raise serializers.ValidationError(f"Failed to process S3 file: {str(e)}")
+
+        return super().create(validated_data)

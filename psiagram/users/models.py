@@ -12,6 +12,7 @@ class User(AbstractUser):
     # These fields are already in AbstractUser, but we make them explicit if needed
     first_name = models.CharField(_('first name'), max_length=150)
     last_name = models.CharField(_('last name'), max_length=150)
+    birth_date = models.DateField(_('birth date'), null=True, blank=True)
 
     # Set email as the unique identifier for authentication
     USERNAME_FIELD = 'email'

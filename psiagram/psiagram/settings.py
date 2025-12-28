@@ -68,8 +68,8 @@ REST_FRAMEWORK = {
 
 REST_AUTH = {
     'USE_JWT': True,
-    'JWT_AUTH_COOKIE': 'psiagram-auth',
-    'JWT_AUTH_REFRESH_COOKIE': 'psiagram-refresh-token',
+    # 'JWT_AUTH_COOKIE': 'psiagram-auth',
+    # 'JWT_AUTH_REFRESH_COOKIE': 'psiagram-refresh-token',
 }
 
 ACCOUNT_SIGNUP_FIELDS = ['first_name', 'last_name', 'email*', 'password1*', 'password2*']
@@ -115,8 +115,9 @@ WSGI_APPLICATION = 'psiagram.wsgi.application'
 # --- DATABASE CONFIGURATION (AWS RDS PRIMARY) ---
 
 # 1. Try to configure for AWS RDS PostgreSQL
-DATABASES = {
-    'default': {
+if os.environ.get('DB_NAME'):
+    DATABASES = {
+        'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.environ.get('DB_NAME'),
             'USER': os.environ.get('DB_USER'),
@@ -124,8 +125,15 @@ DATABASES = {
             'HOST': os.environ.get('DB_HOST'),
             'PORT': os.environ.get('DB_PORT', '5432'),
             'CONN_MAX_AGE': 600,
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -158,4 +166,5 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:8081",
+    "http://127.0.0.1:8081",
 ]
