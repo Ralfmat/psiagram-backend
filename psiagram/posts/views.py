@@ -1,9 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.db.models import Q 
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from rest_framework.pagination import CursorPagination
-from .models import Post
-from .serializers import PostFeedSerializer, PostSerializer
+from .models import Post, Like
+from .serializers import PostFeedSerializer, PostSerializer, CommentSerializer
 
 # 2. Define how the pagination works
 class FeedPagination(CursorPagination):
@@ -71,3 +73,29 @@ class PostDetailView(generics.RetrieveAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+
+class LikePostView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        post = get_object_or_404(Post, pk=pk)
+        like, created = Like.objects.get_or_create(user=request.user, post=post)
+        
+        if not created:
+            # User already liked this post, so we remove the like
+            like.delete()
+            return Response({'status': 'unliked', 'likes_count': post.likes.count()}, status=status.HTTP_200_OK)
+        
+        # User hasn't liked it yet, created new like
+        return Response({'status': 'liked', 'likes_count': post.likes.count()}, status=status.HTTP_201_CREATED)
+
+
+class CommentCreateView(generics.CreateAPIView):
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        post_id = self.kwargs['pk']
+        post = get_object_or_404(Post, pk=post_id)
+        serializer.save(author=self.request.user, post=post)

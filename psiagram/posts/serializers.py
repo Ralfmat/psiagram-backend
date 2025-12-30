@@ -28,7 +28,7 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ['id', 'post', 'author', 'author_username', 'content', 'created_at']
         extra_kwargs = {
             'author': {'read_only': True},
-            'post': {'write_only': True}
+            'post': {'read_only': True}
         }
 
 
@@ -55,6 +55,7 @@ class PostSerializer(serializers.ModelSerializer):
     comments = CommentSerializer(many=True, read_only=True)
     tagged_pets_details = PetProfileSerializer(many=True, read_only=True, source='tagged_pets')
     likes_count = serializers.SerializerMethodField(read_only=True)
+    is_liked = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Post
@@ -70,6 +71,7 @@ class PostSerializer(serializers.ModelSerializer):
             'tagged_pets_details',
             'comments',
             'likes_count',
+            'is_liked',
             'verification_status',
             'rekognition_labels'
         ]
@@ -82,13 +84,20 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_likes_count(self, obj):
         return obj.likes.count()
-    
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(user=request.user).exists()
+        return False
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         # Convert relative image path to full S3 URL
         if instance.image:
             representation['image'] = get_s3_url(instance.image)
         return representation
+
 
 class PostFeedSerializer(serializers.ModelSerializer):
     author = serializers.PrimaryKeyRelatedField(read_only=True)
