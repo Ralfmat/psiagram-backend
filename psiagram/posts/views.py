@@ -41,6 +41,21 @@ class FeedView(generics.ListAPIView):
             .order_by("-created_at")
         )
 
+
+class UserPostsView(generics.ListAPIView):
+    serializer_class = PostFeedSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = FeedPagination
+
+    def get_queryset(self):
+        # Fetch posts for a specific user ID passed in the URL
+        user_id = self.kwargs['pk']
+        return Post.objects.filter(
+            author__id=user_id,
+            verification_status=Post.VerificationStatus.APPROVED
+        ).order_by('-created_at')
+
+
 class CreatePostView(generics.CreateAPIView):
     serializer_class = PostFeedSerializer
     permission_classes = [permissions.IsAuthenticated]

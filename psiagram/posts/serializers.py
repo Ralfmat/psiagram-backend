@@ -6,6 +6,17 @@ from .models import Post, Comment, Like
 from pets.serializers import PetProfileSerializer
 from users.serializers import UserSerializer
 
+
+def get_s3_url(file_path):
+    if not file_path:
+        return None
+    # Check if it's already a full URL (in case we change logic later)
+    if str(file_path).startswith('http'):
+        return str(file_path)
+        
+    return f"https://{settings.AWS_S3_BUCKET_NAME}.s3.{settings.AWS_REGION_NAME}.amazonaws.com/{file_path}"
+
+
 class CommentSerializer(serializers.ModelSerializer):
     """
     Serializer for the Comment model.
@@ -41,11 +52,8 @@ class PostSerializer(serializers.ModelSerializer):
     Serializer for the Post model. Includes details about the author, comments, tagged pets, and likes.
     """
     author_username = serializers.CharField(source='author.username', read_only=True)
-    
     comments = CommentSerializer(many=True, read_only=True)
-    
     tagged_pets_details = PetProfileSerializer(many=True, read_only=True, source='tagged_pets')
-    
     likes_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -74,6 +82,13 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_likes_count(self, obj):
         return obj.likes.count()
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Convert relative image path to full S3 URL
+        if instance.image:
+            representation['image'] = get_s3_url(instance.image)
+        return representation
 
 class PostFeedSerializer(serializers.ModelSerializer):
     author = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -140,3 +155,10 @@ class PostFeedSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(f"Failed to process S3 file: {str(e)}")
 
         return super().create(validated_data)
+    
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        # Convert relative image path to full S3 URL
+        if instance.image:
+             representation['image'] = get_s3_url(instance.image)
+        return representation
