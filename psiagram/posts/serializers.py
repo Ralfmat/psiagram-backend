@@ -52,6 +52,7 @@ class PostSerializer(serializers.ModelSerializer):
     Serializer for the Post model. Includes details about the author, comments, tagged pets, and likes.
     """
     author_username = serializers.CharField(source='author.username', read_only=True)
+    author_avatar = serializers.SerializerMethodField(read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
     tagged_pets_details = PetProfileSerializer(many=True, read_only=True, source='tagged_pets')
     likes_count = serializers.SerializerMethodField(read_only=True)
@@ -73,7 +74,8 @@ class PostSerializer(serializers.ModelSerializer):
             'likes_count',
             'is_liked',
             'verification_status',
-            'rekognition_labels'
+            'rekognition_labels',
+            'author_avatar',
         ]
         extra_kwargs = {
             'author': {'read_only': True}, 
@@ -81,6 +83,11 @@ class PostSerializer(serializers.ModelSerializer):
             'verification_status': {'read_only': True},
             'rekognition_labels': {'read_only': True}
         }
+
+    def get_author_avatar(self, obj):
+        if hasattr(obj.author, 'profile') and obj.author.profile.avatar:
+            return get_s3_url(obj.author.profile.avatar)
+        return None
 
     def get_likes_count(self, obj):
         return obj.likes.count()
@@ -102,10 +109,11 @@ class PostSerializer(serializers.ModelSerializer):
 class PostFeedSerializer(serializers.ModelSerializer):
     author = serializers.PrimaryKeyRelatedField(read_only=True)
     author_username = serializers.CharField(source='author.username', read_only=True)
+    author_avatar = serializers.SerializerMethodField(read_only=True)
     likes_count = serializers.IntegerField(source='likes.count', read_only=True)
     comments_count = serializers.IntegerField(source='comments.count', read_only=True)
-
     s3_key = serializers.CharField(write_only=True, required=False)
+    is_liked = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Post
@@ -113,16 +121,23 @@ class PostFeedSerializer(serializers.ModelSerializer):
             "id",
             "author",
             "author_username",
+            'author_avatar',
             "image",
             "caption",
             "created_at",
             "likes_count",
             "comments_count",
             "s3_key",
+            "is_liked",
         ]
         extra_kwargs = {
             'image': {'required': False}
         }
+
+    def get_author_avatar(self, obj):
+        if hasattr(obj.author, 'profile') and obj.author.profile.avatar:
+            return get_s3_url(obj.author.profile.avatar)
+        return None
 
     def validate(self, attrs):
         if not attrs.get('image') and not attrs.get('s3_key'):
@@ -171,3 +186,9 @@ class PostFeedSerializer(serializers.ModelSerializer):
         if instance.image:
              representation['image'] = get_s3_url(instance.image)
         return representation
+    
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(user=request.user).exists()
+        return False

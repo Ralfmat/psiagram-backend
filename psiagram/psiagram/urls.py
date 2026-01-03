@@ -13,4 +13,5 @@ urlpatterns = [
     path("users/", include("users.urls")),
     path("api/posts/", include("posts.urls")),
     path("api/profiles/", include("profiles.urls")),
+    path("api/notifications/", include("notifications.urls")),
 ]

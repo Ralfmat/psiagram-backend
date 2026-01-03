@@ -1,5 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q 
+from profiles.models import UserProfile
+from profiles.serializers import ProfileListSerializer
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -7,7 +9,6 @@ from rest_framework.pagination import CursorPagination
 from .models import Post, Like
 from .serializers import PostFeedSerializer, PostSerializer, CommentSerializer
 
-# 2. Define how the pagination works
 class FeedPagination(CursorPagination):
     page_size = 5
     ordering = '-created_at'
@@ -99,3 +100,12 @@ class CommentCreateView(generics.CreateAPIView):
         post_id = self.kwargs['pk']
         post = get_object_or_404(Post, pk=post_id)
         serializer.save(author=self.request.user, post=post)
+
+
+class PostLikesListView(generics.ListAPIView):
+    serializer_class = ProfileListSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        post_id = self.kwargs['pk']
+        return UserProfile.objects.filter(user__likes__post_id=post_id)
