@@ -23,3 +23,13 @@ def me(request):
         "username": user.username,
         "email": user.email,
     })
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_account(request):
+    """
+    Deletes the currently authenticated user and their profile.
+    """
+    user = request.user
+    user.delete()
+    return Response({"detail": "Account deleted successfully."})

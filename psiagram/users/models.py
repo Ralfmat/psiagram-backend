@@ -15,7 +15,7 @@ class User(AbstractUser):
     birth_date = models.DateField(_('birth date'), null=True, blank=True)
 
     # Set email as the unique identifier for authentication
-    # USERNAME_FIELD = 'email'
+    USERNAME_FIELD = 'email'
     
     # Fields required when creating a superuser (besides email and password)
     REQUIRED_FIELDS = ['first_name', 'last_name']

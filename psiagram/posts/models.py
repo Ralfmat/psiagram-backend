@@ -43,7 +43,7 @@ class Post(models.Model):
     verification_status = models.CharField(
         max_length=20,
         choices=VerificationStatus.choices,
-        default=VerificationStatus.PENDING,
+        default=VerificationStatus.APPROVED,
         verbose_name='Verification Status'
     )
     # Field to store raw AWS Rekognition labels as JSON
