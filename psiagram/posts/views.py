@@ -1,8 +1,10 @@
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q 
+from groups.models import Group
 from profiles.models import UserProfile
 from profiles.serializers import ProfileListSerializer
-from rest_framework import generics, permissions, status
+from rest_framework.exceptions import PermissionDenied
+from rest_framework import generics, permissions, status, exceptions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import CursorPagination
@@ -51,12 +53,12 @@ class UserPostsView(generics.ListAPIView):
     pagination_class = FeedPagination
 
     def get_queryset(self):
-        # Fetch posts for a specific user ID passed in the URL
         user_id = self.kwargs['pk']
         return Post.objects.filter(
             author__id=user_id,
+            group__isnull=True,
             verification_status=Post.VerificationStatus.APPROVED
-        ).order_by('-created_at')
+        ).select_related("author").prefetch_related("likes", "comments").order_by('-created_at')
 
 
 class CreatePostView(generics.CreateAPIView):
@@ -64,16 +66,48 @@ class CreatePostView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
+        group_input = serializer.validated_data.get('group')
+        if group_input:
+            if not group_input.members.filter(id=self.request.user.id).exists():
+                 raise exceptions.PermissionDenied("You must be a member of this group to post.")
+        
         serializer.save(author=self.request.user)
 
 
-class PostDetailView(generics.RetrieveAPIView):
+class GroupPostsView(generics.ListAPIView):
     """
-    View to retrieve a single post by its ID.
+    List posts belonging to a specific group.
+    """
+    serializer_class = PostFeedSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = FeedPagination
+
+    def get_queryset(self):
+        group_id = self.kwargs['pk']
+        group = get_object_or_404(Group, id=group_id)
+        
+        # Check membership
+        if not group.members.filter(id=self.request.user.id).exists():
+             raise exceptions.PermissionDenied("You must be a member to view these posts.")
+
+        return Post.objects.filter(
+            group=group,
+            verification_status=Post.VerificationStatus.APPROVED
+        ).select_related("author").prefetch_related("likes", "comments").order_by('-created_at')
+
+
+class PostDetailView(generics.RetrieveDestroyAPIView): # Changed from RetrieveAPIView
+    """
+    View to retrieve a single post by its ID or delete it.
     """
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def perform_destroy(self, instance):
+        if instance.author != self.request.user:
+            raise PermissionDenied("You do not have permission to delete this post.")
+        instance.delete()
 
 
 class LikePostView(APIView):

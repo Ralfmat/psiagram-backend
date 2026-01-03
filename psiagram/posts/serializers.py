@@ -5,6 +5,7 @@ from rest_framework import serializers
 from .models import Post, Comment, Like
 from pets.serializers import PetProfileSerializer
 from users.serializers import UserSerializer
+from groups.models import Group
 
 
 def get_s3_url(file_path):
@@ -57,13 +58,16 @@ class PostSerializer(serializers.ModelSerializer):
     tagged_pets_details = PetProfileSerializer(many=True, read_only=True, source='tagged_pets')
     likes_count = serializers.SerializerMethodField(read_only=True)
     is_liked = serializers.SerializerMethodField(read_only=True)
+    group_name = serializers.CharField(source='group.name', read_only=True)
 
     class Meta:
         model = Post
         fields = [
             'id', 
             'author', 
-            'author_username', 
+            'author_username',
+            'group',
+            'group_name',
             'image', 
             'caption', 
             'created_at', 
@@ -114,6 +118,8 @@ class PostFeedSerializer(serializers.ModelSerializer):
     comments_count = serializers.IntegerField(source='comments.count', read_only=True)
     s3_key = serializers.CharField(write_only=True, required=False)
     is_liked = serializers.SerializerMethodField(read_only=True)
+    group = serializers.PrimaryKeyRelatedField(queryset=Group.objects.all(), required=False, allow_null=True)
+    group_name = serializers.CharField(source='group.name', read_only=True)
 
     class Meta:
         model = Post
@@ -122,6 +128,8 @@ class PostFeedSerializer(serializers.ModelSerializer):
             "author",
             "author_username",
             'author_avatar',
+            "group",
+            "group_name",
             "image",
             "caption",
             "created_at",

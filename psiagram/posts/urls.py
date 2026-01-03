@@ -1,7 +1,8 @@
 from django.urls import path
 from .views import (
     FeedView, 
-    CreatePostView, 
+    CreatePostView,
+    GroupPostsView, 
     PostDetailView, 
     UserPostsView, 
     LikePostView, 
@@ -17,4 +18,5 @@ urlpatterns = [
     path("user/<int:pk>/", UserPostsView.as_view(), name="user-posts"),
     path("<int:pk>/like/", LikePostView.as_view(), name="post-like"),
     path("<int:pk>/comment/", CommentCreateView.as_view(), name="post-comment"),
+    path("group/<int:pk>/", GroupPostsView.as_view(), name="group-posts"),
 ]
