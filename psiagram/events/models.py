@@ -58,11 +58,6 @@ class EventAttendance(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Event'
     )
-    pets = models.ManyToManyField(
-        'pets.PetProfile',
-        blank=True,
-        verbose_name='Attending Pets'
-    )
 
     class Meta:
         verbose_name = "Event Attendance"
@@ -74,9 +69,3 @@ class EventAttendance(models.Model):
                 name='unique_event_attendance'
             )
         ]
-    
-
-    def __str__(self):
-        pet_count = self.pets.count()
-        pet_info = f" with {pet_count} pets" if pet_count > 0 else " (without pets)"
-        return f"{self.user.username} - {self.event.name}{pet_info}"

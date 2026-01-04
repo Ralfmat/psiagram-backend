@@ -3,7 +3,6 @@ import boto3
 from django.conf import settings
 from rest_framework import serializers
 from .models import Post, Comment, Like
-from pets.serializers import PetProfileSerializer
 from users.serializers import UserSerializer
 from groups.models import Group
 
@@ -50,12 +49,11 @@ class LikeSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     """
-    Serializer for the Post model. Includes details about the author, comments, tagged pets, and likes.
+    Serializer for the Post model. Includes details about the author, comments, and likes.
     """
     author_username = serializers.CharField(source='author.username', read_only=True)
     author_avatar = serializers.SerializerMethodField(read_only=True)
     comments = CommentSerializer(many=True, read_only=True)
-    tagged_pets_details = PetProfileSerializer(many=True, read_only=True, source='tagged_pets')
     likes_count = serializers.SerializerMethodField(read_only=True)
     is_liked = serializers.SerializerMethodField(read_only=True)
     group_name = serializers.CharField(source='group.name', read_only=True)
@@ -72,8 +70,6 @@ class PostSerializer(serializers.ModelSerializer):
             'caption', 
             'created_at', 
             'updated_at',
-            'tagged_pets',
-            'tagged_pets_details',
             'comments',
             'likes_count',
             'is_liked',
@@ -83,7 +79,6 @@ class PostSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {
             'author': {'read_only': True}, 
-            'tagged_pets': {'write_only': True, 'required': False}, 
             'verification_status': {'read_only': True},
             'rekognition_labels': {'read_only': True}
         }

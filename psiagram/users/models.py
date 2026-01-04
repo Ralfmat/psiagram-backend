@@ -18,7 +18,7 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     
     # Fields required when creating a superuser (besides email and password)
-    REQUIRED_FIELDS = ['first_name', 'last_name']
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'username']
 
     def __str__(self):
         return self.email

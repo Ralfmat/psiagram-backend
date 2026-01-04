@@ -29,12 +29,6 @@ class Post(models.Model):
         upload_to='posts/%Y/%m/%d/',
         verbose_name='Post Image'
     )
-    tagged_pets = models.ManyToManyField(
-        'pets.PetProfile',
-        blank=True,
-        related_name='tagged_in_posts',
-        verbose_name='Tagged Pets'
-    )
     caption = models.TextField(
         blank=True,
         null=True,

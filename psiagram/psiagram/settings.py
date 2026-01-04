@@ -50,7 +50,6 @@ INSTALLED_APPS = [
     # Local Apps
     'aws_rekognition',
     'users',
-    'pets',
     'posts',
     'profiles',
     'events',
