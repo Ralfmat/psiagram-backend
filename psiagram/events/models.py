@@ -25,6 +25,14 @@ class Event(models.Model):
         blank=True,
         verbose_name='Attendees'
     )
+    group = models.ForeignKey(
+        'groups.Group',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='events',
+        verbose_name='Group'
+    )
 
     class Meta:
         verbose_name = "Event"

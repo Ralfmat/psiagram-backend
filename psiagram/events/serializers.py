@@ -32,6 +32,8 @@ class EventSerializer(serializers.ModelSerializer):
     
     attendees_count = serializers.SerializerMethodField(read_only=True)
 
+    group_name = serializers.CharField(source='group.name', read_only=True)
+
     class Meta:
         model = Event
         fields = [
@@ -40,7 +42,9 @@ class EventSerializer(serializers.ModelSerializer):
             'description', 
             'location', 
             'start_time', 
-            'end_time', 
+            'end_time',
+            'group',
+            'group_name',
             'organizer', 
             'organizer_username', 
             'attendees', 

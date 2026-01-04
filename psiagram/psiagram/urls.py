@@ -15,4 +15,5 @@ urlpatterns = [
     path("api/profiles/", include("profiles.urls")),
     path("api/notifications/", include("notifications.urls")),
     path("api/groups/", include("groups.urls")),
+    path("api/events/", include("events.urls")),
 ]
