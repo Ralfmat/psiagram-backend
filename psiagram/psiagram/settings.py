@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'corsheaders',
+    'storages',
     
     # Auth & Social
     'dj_rest_auth',
@@ -159,10 +160,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
-STATIC_ROOT = '/tmp/static'
-
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -178,3 +175,20 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8081",
     "http://127.0.0.1:8081",
 ]
+
+AWS_STORAGE_BUCKET_NAME = AWS_S3_BUCKET_NAME  # <--- THIS IS CRITICAL
+AWS_S3_REGION_NAME = AWS_REGION_NAME
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "storages.backends.s3boto3.S3StaticStorage",
+    },
+}
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+STATIC_URL = f'https://{AWS_S3_BUCKET_NAME}.s3.amazonaws.com/static/'
+MEDIA_URL = f'https://{AWS_S3_BUCKET_NAME}.s3.amazonaws.com/media/'
