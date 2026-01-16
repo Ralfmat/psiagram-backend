@@ -17,15 +17,17 @@ class Post(models.Model):
         related_name='posts',
         verbose_name='Author'
     )
+    group = models.ForeignKey(
+        'groups.Group',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='posts',
+        verbose_name='Group'
+    )
     image = models.ImageField(
         upload_to='posts/%Y/%m/%d/',
         verbose_name='Post Image'
-    )
-    tagged_pets = models.ManyToManyField(
-        'pets.PetProfile',
-        blank=True,
-        related_name='tagged_in_posts',
-        verbose_name='Tagged Pets'
     )
     caption = models.TextField(
         blank=True,
@@ -43,10 +45,9 @@ class Post(models.Model):
     verification_status = models.CharField(
         max_length=20,
         choices=VerificationStatus.choices,
-        default=VerificationStatus.PENDING,
+        default=VerificationStatus.APPROVED,
         verbose_name='Verification Status'
     )
-    # Field to store raw AWS Rekognition labels as JSON
     rekognition_labels = models.JSONField(
         blank=True,
         null=True,
@@ -62,9 +63,6 @@ class Post(models.Model):
         return f"Post by {self.author.username} at {self.created_at}"
     
 class Comment(models.Model):
-    """
-    Model representing a comment on a post.
-    """
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
@@ -95,9 +93,6 @@ class Comment(models.Model):
 
 
 class Like(models.Model):
-    """
-    Model representing a like on a post.
-    """
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,

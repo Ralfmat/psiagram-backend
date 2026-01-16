@@ -3,17 +3,20 @@ from django.conf import settings
 
 class Group(models.Model):
     """
-    Model representing a user group in the application."""
+    Model representing a user group in the application.
+    """
     name = models.CharField(max_length=100, unique=True, verbose_name="Group Name")
     description = models.TextField(blank=True, null=True, verbose_name="Description")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
-    admin = models.ForeignKey(
+    
+    # Changed from single ForeignKey to ManyToMany to support multiple admins
+    admins = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
         related_name='administered_groups',
-        verbose_name='Group Admin'
+        verbose_name='Group Admins'
     )
+    
     members = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name='joined_groups',
@@ -77,7 +80,6 @@ class GroupJoinRequest(models.Model):
                 name='unique_join_request'
             )
         ]
-
 
     def __str__(self):
         return f"{self.user.username} -> {self.group.name} ({self.status})"

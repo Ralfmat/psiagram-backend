@@ -12,4 +12,5 @@ urlpatterns = [
     path("ping/", views.ping, name="users-ping"),
 
     path("me/", views.me, name="users-me"),
+    path("delete/", views.delete_account, name="users-delete"),
 ]

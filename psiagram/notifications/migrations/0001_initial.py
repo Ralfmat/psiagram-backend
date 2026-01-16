@@ -12,13 +12,15 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='UploadedImage',
+            name='Notification',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('image_file', models.ImageField(upload_to='uploads/')),
-                ('s3_key', models.CharField(blank=True, max_length=255)),
-                ('analysis_result', models.JSONField(blank=True, null=True)),
-                ('uploaded_at', models.DateTimeField(auto_now_add=True)),
+                ('notification_type', models.CharField(choices=[('LIKE', 'Like'), ('COMMENT', 'Comment'), ('FOLLOW', 'Follow')], max_length=20)),
+                ('is_read', models.BooleanField(default=False)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
             ],
+            options={
+                'ordering': ['-created_at'],
+            },
         ),
     ]

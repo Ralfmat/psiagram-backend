@@ -1,32 +1,26 @@
+from datetime import timedelta
 from pathlib import Path
-from decouple import config
 import os
 from dotenv import load_dotenv
-
 import dj_database_url
 
 # Load environment variables from a .env file if present
 load_dotenv(override=True)
-print("Loaded AWS KEY: ", os.getenv("AWS_ACCESS_KEY_ID"))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-21qmrpvcks7gd*@*60-&bnloo5@xt_t#xklv8@3(za#dhgub*j'
+# Tries to get it from AWS Env variables, falls back to the insecure one for local dev
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-21qmrpvcks7gd*@*60-&bnloo5@xt_t#xklv8@3(za#dhgub*j')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-
-# Odpalam debuga pozdro
-DEBUG = True
-
+# Checks for an environment variable, defaults to True if not found (safer to set to False in AWS env vars)
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ["*"]
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -34,15 +28,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'notifications.apps.NotificationsConfig',
     
     # Architecture Apps
-    'django.contrib.sites', # Required by allauth
+    'django.contrib.sites',
     
     # Third Party
     'rest_framework',
-    'rest_framework.authtoken', # Required by dj-rest-auth
+    'rest_framework.authtoken',
     'rest_framework_simplejwt',
     'corsheaders',
+    'storages',
     
     # Auth & Social
     'dj_rest_auth',
@@ -51,17 +47,16 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    
     # Local Apps
     'aws_rekognition',
     'users',
-    'pets',
     'posts',
     'profiles',
     'events',
     'groups',
 ]
 
-# allauth required setting
 SITE_ID = 1
 
 REST_FRAMEWORK = {
@@ -75,19 +70,26 @@ REST_FRAMEWORK = {
 
 REST_AUTH = {
     'USE_JWT': True,
-    'JWT_AUTH_COOKIE': 'psiagram-auth',
-    'JWT_AUTH_REFRESH_COOKIE': 'psiagram-refresh-token',
+    'JWT_AUTH_COOKIE': None,
+    'JWT_AUTH_REFRESH_COOKIE': None,
+    'JWT_AUTH_HTTPONLY': False,
+    'JWT_AUTH_RETURN_EXPIRATION': True,
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 }
 
 ACCOUNT_SIGNUP_FIELDS = ['first_name', 'last_name', 'email*', 'password1*', 'password2*']
-
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
 AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
@@ -121,94 +123,72 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'psiagram.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# --- DATABASE CONFIGURATION (AWS RDS PRIMARY) ---
 
-# Domyślnie SQLite (dla pracy lokalnej, jeśli nie podano danych do bazy)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
-# Nadpisanie konfiguracji, jeśli dostępne są zmienne środowiskowe bazy danych (czyli na AWS)
-db_from_env = dj_database_url.config(
-    default=None, # Nie używaj defaultu, jeśli brak zmiennej DATABASE_URL
-    conn_max_age=600
-)
-
-# Jeśli dj_database_url coś znalazł (np. przez DATABASE_URL) LUB mamy ustawione zmienne ręcznie:
-if os.environ.get('DB_HOST'):
+# 1. Try to configure for AWS RDS PostgreSQL
+if os.environ.get('DB_NAME'):
     DATABASES = {
-        'default': dj_database_url.parse(
-            f"postgres://{os.environ.get('DB_USER')}:{os.environ.get('DB_PASSWORD')}@{os.environ.get('DB_HOST')}:{os.environ.get('DB_PORT')}/{os.environ.get('DB_NAME')}",
-            conn_max_age=600
-        )
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DB_NAME'),
+            'USER': os.environ.get('DB_USER'),
+            'PASSWORD': os.environ.get('DB_PASSWORD'),
+            'HOST': os.environ.get('DB_HOST'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
+            'CONN_MAX_AGE': 600,
+        }
     }
-elif db_from_env:
-    DATABASES['default'].update(db_from_env)
-
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    { 'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator', },
+    { 'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', },
+    { 'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator', },
+    { 'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator', },
 ]
 
 # Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
-STATIC_URL = 'static/'
-
-STATIC_ROOT = '/tmp/static'
-
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# AWS S3 Settings
 AWS_S3_BUCKET_NAME = os.environ.get("AWS_S3_BUCKET_NAME")
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
-AWS_REGION_NAME = os.environ.get("AWS_REGION_NAME", os.environ.get("AWS_REGION", "eu-west-1"))
-
-# Bedzie można łatwo sprawdzić czy S3 jest włączone przez USE_S3
-USE_S3 = all([
-    AWS_ACCESS_KEY_ID,
-    AWS_SECRET_ACCESS_KEY,
-    AWS_REGION_NAME,
-    AWS_S3_BUCKET_NAME
-])
+AWS_REGION_NAME = os.environ.get("AWS_REGION_NAME", "eu-central-1")
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    'http://localhost:8081',
-
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
 ]
 
+AWS_STORAGE_BUCKET_NAME = AWS_S3_BUCKET_NAME
+AWS_S3_REGION_NAME = AWS_REGION_NAME
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "storages.backends.s3boto3.S3StaticStorage",
+    },
+}
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+STATIC_URL = f'https://{AWS_S3_BUCKET_NAME}.s3.amazonaws.com/static/'
+MEDIA_URL = f'https://{AWS_S3_BUCKET_NAME}.s3.amazonaws.com/media/'
